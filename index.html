@@ -1,0 +1,2376 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-stone-50 text-stone-900 antialiased">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATELIER VESTIAIRE — Rent Your Luxury Wardrobe</title>
+  
+  <!-- Google Fonts: Editorial Serif & Modern Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#faf8f5',
+              100: '#f4f0e9',
+              200: '#e8dfd1',
+              300: '#d8c7b0',
+              400: '#c5ab8d',
+              500: '#b4926f',
+              600: '#9d7b5b',
+              700: '#7f6149',
+              800: '#684f3e',
+              900: '#564235',
+              950: '#2f231b',
+            },
+            accent: {
+              gold: '#c5a059',
+              emerald: '#1b4332',
+              noir: '#121212',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Supabase JS v2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* Custom Luxury Styling & Micro-interactions */
+    ::selection {
+      background-color: #d8c7b0;
+      color: #121212;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f4f0e9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #c5ab8d;
+      border-radius: 9999px;
+    }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .glass-nav {
+      background: rgba(250, 248, 245, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col font-sans selection:bg-brand-200">
+
+  <!-- ========================================== -->
+  <!-- CONFIGURATION / DEMO BANNER               -->
+  <!-- ========================================== -->
+  <aside id="config-banner" class="bg-stone-900 text-stone-200 text-xs px-4 py-2.5 flex items-center justify-between border-b border-stone-800 transition-all duration-300">
+    <div class="container mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+          <i data-lucide="zap" class="w-3 h-3 mr-1 inline"></i> <span id="status-mode-pill">Demo Mode</span>
+        </span>
+        <span id="config-banner-text" class="text-stone-300">
+          Running with interactive local luxury store. Connect your Supabase credentials for real-time Cloud backend.
+        </span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="App.openSqlModal()" class="hover:text-amber-300 underline underline-offset-2 flex items-center gap-1 transition-colors">
+          <i data-lucide="database" class="w-3.5 h-3.5"></i> SQL Schema & Setup Guide
+        </button>
+        <button onclick="App.toggleDemoAdmin()" class="bg-stone-800 hover:bg-stone-700 text-stone-200 px-2.5 py-1 rounded text-xs transition border border-stone-700 flex items-center gap-1.5">
+          <i data-lucide="shield-alert" class="w-3 h-3 text-amber-400"></i>
+          <span id="admin-toggle-text">Toggle Admin View</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- MAIN NAVIGATION                           -->
+  <!-- ========================================== -->
+  <header class="sticky top-0 z-40 glass-nav border-b border-stone-200 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Brand Logo -->
+        <div class="flex items-center gap-8">
+          <a href="#" onclick="App.resetFilters(); return false;" class="group flex flex-col">
+            <span class="font-serif text-2xl sm:text-3xl font-bold tracking-[0.2em] uppercase text-stone-900 group-hover:text-brand-700 transition-colors">
+              ATELIER VESTIAIRE
+            </span>
+            <span class="text-[9px] uppercase tracking-[0.35em] text-stone-500 font-medium -mt-0.5">
+              Haute Couture & Designer Rentals
+            </span>
+          </a>
+
+          <!-- Desktop Quick Category Pills -->
+          <nav class="hidden md:flex items-center space-x-1 pl-4 border-l border-stone-200 text-xs tracking-wider uppercase font-medium text-stone-600">
+            <button onclick="App.setCategory('All')" class="nav-cat-btn px-3 py-1.5 rounded-full transition-all text-stone-900 font-semibold bg-stone-200/60" data-cat="All">All Pieces</button>
+            <button onclick="App.setCategory('Dresses')" class="nav-cat-btn px-3 py-1.5 rounded-full hover:text-stone-900 transition-all" data-cat="Dresses">Dresses</button>
+            <button onclick="App.setCategory('Outerwear')" class="nav-cat-btn px-3 py-1.5 rounded-full hover:text-stone-900 transition-all" data-cat="Outerwear">Outerwear</button>
+            <button onclick="App.setCategory('Ethnic/Occasion')" class="nav-cat-btn px-3 py-1.5 rounded-full hover:text-stone-900 transition-all" data-cat="Ethnic/Occasion">Ethnic & Occasion</button>
+            <button onclick="App.setCategory('Accessories')" class="nav-cat-btn px-3 py-1.5 rounded-full hover:text-stone-900 transition-all" data-cat="Accessories">Accessories</button>
+          </nav>
+        </div>
+
+        <!-- Right Navigation Items -->
+        <div class="flex items-center gap-3 sm:gap-4">
+          <!-- Search toggle / box -->
+          <div class="relative hidden sm:block w-48 lg:w-64">
+            <input 
+              type="text" 
+              id="search-input" 
+              oninput="App.handleSearch(this.value)" 
+              placeholder="Search designer, title..." 
+              class="w-full text-xs pl-8 pr-4 py-2 bg-stone-100/90 border border-stone-200 rounded-full focus:outline-none focus:ring-1 focus:ring-stone-400 focus:bg-white transition"
+            >
+            <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5"></i>
+          </div>
+
+          <!-- My Rentals Button -->
+          <button 
+            id="my-rentals-btn"
+            onclick="App.openRentalsModal()" 
+            class="relative inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium uppercase tracking-wider text-stone-700 hover:text-stone-900 bg-stone-100 hover:bg-stone-200/80 rounded-full transition border border-stone-200"
+          >
+            <i data-lucide="calendar" class="w-4 h-4 text-brand-700"></i>
+            <span class="hidden sm:inline">My Rentals</span>
+            <span id="rental-badge-count" class="hidden ml-1 px-1.5 py-0.2 text-[10px] bg-stone-900 text-white rounded-full font-bold">0</span>
+          </button>
+
+          <!-- Admin Portal Button (visible when admin) -->
+          <button 
+            id="admin-nav-btn"
+            onclick="App.openAdminModal()" 
+            class="hidden inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium uppercase tracking-wider text-amber-900 bg-amber-100/80 hover:bg-amber-200 rounded-full transition border border-amber-300"
+          >
+            <i data-lucide="layout-dashboard" class="w-4 h-4 text-amber-700"></i>
+            <span>Admin</span>
+          </button>
+
+          <!-- User Auth Profile Dropdown / Button -->
+          <div id="auth-actions-container">
+            <button 
+              id="auth-open-btn"
+              onclick="App.openAuthModal()" 
+              class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold tracking-wider uppercase text-white bg-stone-900 hover:bg-stone-800 rounded-full shadow-sm hover:shadow transition"
+            >
+              <i data-lucide="user" class="w-3.5 h-3.5"></i>
+              <span>Sign In</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- HERO EDITORIAL BANNER                     -->
+  <!-- ========================================== -->
+  <section class="relative bg-gradient-to-b from-stone-100 to-stone-50 border-b border-stone-200 py-12 sm:py-16 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="max-w-3xl">
+        <span class="text-xs uppercase tracking-[0.3em] font-semibold text-brand-700 mb-3 block">
+          Sustainable Luxury • Zero Commitment
+        </span>
+        <h1 class="font-serif text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-stone-950 leading-[1.15]">
+          Wear the Runway. <br class="hidden sm:inline"/>
+          <span class="italic font-normal">Return the Rest.</span>
+        </h1>
+        <p class="mt-4 text-sm sm:text-base text-stone-600 leading-relaxed font-normal max-w-xl">
+          Curated designer couture for galas, destination weddings, and soirees. Every 4 or 8-day booking automatically includes a complimentary 3-day dry cleaning & transit buffer.
+        </p>
+
+        <!-- Feature Badges -->
+        <div class="mt-8 flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-stone-700">
+          <div class="flex items-center gap-2 bg-white/80 px-3 py-1.5 rounded-full border border-stone-200 shadow-sm">
+            <i data-lucide="sparkles" class="w-4 h-4 text-brand-600"></i>
+            <span>100% Verified Authentic</span>
+          </div>
+          <div class="flex items-center gap-2 bg-white/80 px-3 py-1.5 rounded-full border border-stone-200 shadow-sm">
+            <i data-lucide="shield-check" class="w-4 h-4 text-brand-600"></i>
+            <span>Eco Dry Cleaning Included</span>
+          </div>
+          <div class="flex items-center gap-2 bg-white/80 px-3 py-1.5 rounded-full border border-stone-200 shadow-sm">
+            <i data-lucide="refresh-cw" class="w-4 h-4 text-brand-600"></i>
+            <span>Fully Refundable Security Deposits</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Subtle Background Ornament -->
+    <div class="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-brand-100/50 to-transparent pointer-events-none hidden lg:block"></div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- CATALOG CONTROLS & FILTER BAR             -->
+  <!-- ========================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    
+    <!-- Filter Toolbar -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-stone-200">
+      
+      <!-- Left Category selection (Mobile friendly) -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 custom-scrollbar text-xs">
+        <span class="text-stone-400 uppercase tracking-widest font-semibold mr-1 hidden sm:inline">Category:</span>
+        <button onclick="App.setCategory('All')" class="filter-pill active px-3.5 py-1.5 rounded-full border text-xs whitespace-nowrap transition" data-filter="All">All</button>
+        <button onclick="App.setCategory('Dresses')" class="filter-pill px-3.5 py-1.5 rounded-full border text-xs whitespace-nowrap transition" data-filter="Dresses">Dresses</button>
+        <button onclick="App.setCategory('Outerwear')" class="filter-pill px-3.5 py-1.5 rounded-full border text-xs whitespace-nowrap transition" data-filter="Outerwear">Outerwear</button>
+        <button onclick="App.setCategory('Ethnic/Occasion')" class="filter-pill px-3.5 py-1.5 rounded-full border text-xs whitespace-nowrap transition" data-filter="Ethnic/Occasion">Ethnic & Occasion</button>
+        <button onclick="App.setCategory('Accessories')" class="filter-pill px-3.5 py-1.5 rounded-full border text-xs whitespace-nowrap transition" data-filter="Accessories">Accessories</button>
+      </div>
+
+      <!-- Right: Size filter & Sorting -->
+      <div class="flex items-center gap-3 text-xs">
+        <!-- Size Selector -->
+        <div class="flex items-center gap-1.5">
+          <label for="size-select" class="text-stone-500 uppercase tracking-wider font-medium">Size:</label>
+          <select id="size-select" onchange="App.handleSizeFilter(this.value)" class="bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-400">
+            <option value="All">All Sizes</option>
+            <option value="XS">XS</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="Free Size">Free Size</option>
+          </select>
+        </div>
+
+        <!-- Sort Selector -->
+        <div class="flex items-center gap-1.5">
+          <label for="sort-select" class="text-stone-500 uppercase tracking-wider font-medium">Sort:</label>
+          <select id="sort-select" onchange="App.handleSort(this.value)" class="bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-400">
+            <option value="featured">Curated & Featured</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Filter Chips / Counter -->
+    <div class="flex items-center justify-between text-xs text-stone-500 pt-4 pb-2">
+      <div id="results-count">Showing <span class="font-semibold text-stone-900" id="count-number">0</span> designer pieces</div>
+      <div id="active-filter-tags" class="flex items-center gap-2"></div>
+    </div>
+
+    <!-- Product Grid -->
+    <div id="product-grid" class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-24">
+      <div class="w-16 h-16 mx-auto rounded-full bg-stone-100 flex items-center justify-center text-stone-400 mb-4">
+        <i data-lucide="package-search" class="w-8 h-8"></i>
+      </div>
+      <h3 class="font-serif text-xl font-medium text-stone-800">No couture pieces found</h3>
+      <p class="text-xs text-stone-500 mt-1 max-w-sm mx-auto">Try clearing your search query or choosing another size or category filter.</p>
+      <button onclick="App.resetFilters()" class="mt-4 px-4 py-2 text-xs uppercase tracking-wider font-semibold bg-stone-900 text-white rounded-full hover:bg-stone-800 transition">
+        Reset All Filters
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- FOOTER                                     -->
+  <!-- ========================================== -->
+  <footer class="bg-stone-950 text-stone-400 border-t border-stone-800 mt-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 text-xs">
+        <div class="md:col-span-2">
+          <span class="font-serif text-2xl font-bold tracking-[0.2em] uppercase text-stone-100 block">
+            ATELIER VESTIAIRE
+          </span>
+          <p class="mt-3 text-stone-400 max-w-md leading-relaxed">
+            The premier circular luxury wardrobe service. Rent authentic runway archives and occasion wear with seamless delivery, pre-paid return logistics, and complimentary eco-friendly sanitization.
+          </p>
+        </div>
+        <div>
+          <h4 class="text-stone-200 font-semibold uppercase tracking-wider mb-3">Rental Policy</h4>
+          <ul class="space-y-2">
+            <li><span class="hover:text-stone-200 transition">4-Day & 8-Day Durations</span></li>
+            <li><span class="hover:text-stone-200 transition">Automatic 3-Day Transit Buffer</span></li>
+            <li><span class="hover:text-stone-200 transition">100% Refundable Security Deposits</span></li>
+            <li><span class="hover:text-stone-200 transition">Damage Protection Included</span></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-stone-200 font-semibold uppercase tracking-wider mb-3">Architecture</h4>
+          <ul class="space-y-2">
+            <li><span class="hover:text-stone-200 transition">Single-File Production Bundle</span></li>
+            <li><span class="hover:text-stone-200 transition">Supabase Auth, Database & RLS</span></li>
+            <li><span class="hover:text-stone-200 transition">Cloudflare Pages Free Tier Ready</span></li>
+            <li><button onclick="App.openSqlModal()" class="text-amber-400 hover:underline">View SQL Schema</button></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-stone-800 pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-500 gap-4">
+        <p>© 2026 ATELIER VESTIAIRE. All rights reserved.</p>
+        <p>Built with Tailwind CSS, Lucide & Supabase JS.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- MODAL: RENTAL BOOKING & COLLISION CHECK    -->
+  <!-- ========================================== -->
+  <div id="booking-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-stone-900/70 backdrop-blur-sm transition-opacity">
+    <div class="min-h-full flex items-center justify-center p-4 sm:p-6">
+      <div class="relative bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-stone-200 overflow-hidden text-stone-900 transition-all">
+        
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/70">
+          <div class="flex items-center gap-2">
+            <span class="text-xs uppercase tracking-widest font-bold text-brand-700">Reservation Details</span>
+          </div>
+          <button onclick="App.closeBookingModal()" class="text-stone-400 hover:text-stone-700 p-1 rounded-full hover:bg-stone-100 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 space-y-6">
+          
+          <!-- Selected Item Header Preview -->
+          <div id="booking-item-preview" class="flex gap-4 p-4 rounded-xl bg-stone-50 border border-stone-200">
+            <!-- Dynamic Preview -->
+          </div>
+
+          <!-- Step 1: Rental Duration Toggle -->
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 mb-2">
+              1. Choose Rental Duration
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="cursor-pointer relative flex flex-col p-3 rounded-xl border-2 transition-all" id="duration-4d-card">
+                <input type="radio" name="rental-duration" value="4" checked onchange="App.handleDurationChange(4)" class="sr-only">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-semibold text-sm text-stone-900">4-Day Rental</span>
+                  <span id="price-4d-tag" class="text-xs font-bold text-stone-900">$0</span>
+                </div>
+                <span class="text-[11px] text-stone-500">Perfect for weekend galas & events</span>
+              </label>
+
+              <label class="cursor-pointer relative flex flex-col p-3 rounded-xl border-2 transition-all" id="duration-8d-card">
+                <input type="radio" name="rental-duration" value="8" onchange="App.handleDurationChange(8)" class="sr-only">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-semibold text-sm text-stone-900">8-Day Rental</span>
+                  <span id="price-8d-tag" class="text-xs font-bold text-stone-900">$0</span>
+                </div>
+                <span class="text-[11px] text-stone-500">Best for destination weddings & travel</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Step 2: Start Date Picker & Automatic Range Computation -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label for="booking-start-date" class="block text-xs font-semibold uppercase tracking-wider text-stone-600">
+                2. Select Rental Start Date
+              </label>
+              <span class="text-[11px] text-stone-400">Delivery arrives on or before 12 PM</span>
+            </div>
+            <input 
+              type="date" 
+              id="booking-start-date" 
+              onchange="App.handleDateSelection(this.value)"
+              class="w-full bg-white border border-stone-300 rounded-xl px-4 py-2.5 text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-800"
+            >
+          </div>
+
+          <!-- Computed Schedule Summary Card -->
+          <div class="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs space-y-2.5">
+            <div class="flex justify-between items-center text-stone-600">
+              <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5 text-stone-500"></i> Rental Period:</span>
+              <span id="computed-rental-range" class="font-semibold text-stone-900">Select a start date</span>
+            </div>
+            <div class="flex justify-between items-center text-stone-600">
+              <span class="flex items-center gap-1.5"><i data-lucide="package" class="w-3.5 h-3.5 text-stone-500"></i> Return Due Date:</span>
+              <span id="computed-return-date" class="font-semibold text-stone-900">—</span>
+            </div>
+            <div class="flex justify-between items-center text-amber-800 bg-amber-50/80 p-2 rounded-lg border border-amber-200/60">
+              <span class="flex items-center gap-1.5 font-medium"><i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-600"></i> Sanitization & Buffer Window:</span>
+              <span id="computed-buffer-range" class="font-semibold">—</span>
+            </div>
+          </div>
+
+          <!-- Real-Time Collision Status Notification -->
+          <div id="collision-alert" class="hidden p-4 rounded-xl text-xs flex items-start gap-3 transition-all">
+            <!-- Injected dynamically -->
+          </div>
+
+          <!-- Step 3: Transparent Price Breakdown -->
+          <div class="border-t border-stone-200 pt-4 space-y-2 text-xs">
+            <div class="flex justify-between text-stone-600">
+              <span>Rental Fee (<span id="summary-duration-label">4 Days</span>):</span>
+              <span id="summary-rental-fee" class="font-medium text-stone-900">$0.00</span>
+            </div>
+            <div class="flex justify-between text-stone-600">
+              <span class="flex items-center gap-1">
+                Refundable Security Deposit:
+                <i data-lucide="info" class="w-3 h-3 text-stone-400" title="Returned within 48h after piece inspection"></i>
+              </span>
+              <span id="summary-deposit-fee" class="font-medium text-stone-900">$0.00</span>
+            </div>
+            <div class="flex justify-between text-stone-600">
+              <span>Eco Dry Cleaning & Return Kit:</span>
+              <span class="font-medium text-emerald-700">COMPLIMENTARY ($0)</span>
+            </div>
+            <div class="flex justify-between text-sm font-bold text-stone-950 border-t border-stone-200 pt-2">
+              <span>Total Payable Now:</span>
+              <span id="summary-total-fee" class="text-base text-brand-800">$0.00</span>
+            </div>
+            <p class="text-[10px] text-stone-400 italic">
+              * Note: The security deposit is held temporarily and refunded in full upon safe return.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="px-6 py-4 bg-stone-50 border-t border-stone-100 flex items-center justify-between">
+          <button onclick="App.closeBookingModal()" class="px-4 py-2 text-xs uppercase tracking-wider font-semibold text-stone-600 hover:text-stone-900 transition">
+            Cancel
+          </button>
+          <button 
+            id="confirm-booking-btn"
+            onclick="App.executeBooking()" 
+            class="px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-white bg-stone-950 hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-full shadow transition flex items-center gap-2"
+          >
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+            <span>Confirm & Reserve Piece</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: MY RENTALS DASHBOARD               -->
+  <!-- ========================================== -->
+  <div id="rentals-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-stone-900/70 backdrop-blur-sm transition-opacity">
+    <div class="min-h-full flex items-center justify-center p-4 sm:p-6">
+      <div class="relative bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-stone-200 overflow-hidden text-stone-900">
+        
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50">
+          <div>
+            <h3 class="font-serif text-xl font-bold tracking-tight text-stone-900">My Wardrobe Rentals</h3>
+            <p class="text-xs text-stone-500">Track active deliveries, return schedules, and security deposits</p>
+          </div>
+          <button onclick="App.closeRentalsModal()" class="text-stone-400 hover:text-stone-700 p-1 rounded-full hover:bg-stone-100 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6">
+          <div id="user-rentals-container" class="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
+            <!-- Injected via JavaScript -->
+          </div>
+        </div>
+
+        <div class="px-6 py-3 bg-stone-50 border-t border-stone-100 text-right">
+          <button onclick="App.closeRentalsModal()" class="px-5 py-2 text-xs uppercase tracking-wider font-semibold text-stone-700 hover:text-stone-900 transition">
+            Close
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: ADMIN CONTROLS & MANAGEMENT        -->
+  <!-- ========================================== -->
+  <div id="admin-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-stone-900/75 backdrop-blur-sm transition-opacity">
+    <div class="min-h-full flex items-center justify-center p-4 sm:p-6">
+      <div class="relative bg-white rounded-2xl max-w-5xl w-full shadow-2xl border border-stone-200 overflow-hidden text-stone-900">
+        
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-900 text-white">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-300 flex items-center justify-center border border-amber-500/40">
+              <i data-lucide="shield" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="font-serif text-lg font-bold tracking-wider">Atelier Admin Portal</h3>
+              <p class="text-[11px] text-stone-400">Inventory Management & Booking Operations</p>
+            </div>
+          </div>
+          <button onclick="App.closeAdminModal()" class="text-stone-400 hover:text-white p-1 rounded-full transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Navigation Tabs inside Admin -->
+        <div class="flex border-b border-stone-200 px-6 bg-stone-50 text-xs font-semibold tracking-wider uppercase text-stone-600 gap-4">
+          <button onclick="App.setAdminTab('bookings')" id="admin-tab-bookings" class="py-3 border-b-2 border-stone-900 text-stone-900">
+            All Rentals & Logistics
+          </button>
+          <button onclick="App.setAdminTab('new-item')" id="admin-tab-new-item" class="py-3 border-b-2 border-transparent hover:text-stone-900">
+            Add Wardrobe Item
+          </button>
+          <button onclick="App.setAdminTab('inventory')" id="admin-tab-inventory" class="py-3 border-b-2 border-transparent hover:text-stone-900">
+            Catalog Status
+          </button>
+        </div>
+
+        <div class="p-6">
+          
+          <!-- TAB 1: ALL BOOKINGS & LOGISTICS -->
+          <div id="admin-view-bookings" class="space-y-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-stone-500 font-medium">Manage dispatch, return tracking, and deposit refunds:</span>
+              <button onclick="App.refreshAdminBookings()" class="text-xs text-brand-700 hover:underline flex items-center gap-1 font-semibold">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh Data
+              </button>
+            </div>
+            <div class="overflow-x-auto border border-stone-200 rounded-xl">
+              <table class="w-full text-left text-xs text-stone-700">
+                <thead class="bg-stone-50 text-[11px] uppercase tracking-wider text-stone-500 border-b border-stone-200">
+                  <tr>
+                    <th class="px-4 py-3">Item & Renter</th>
+                    <th class="px-4 py-3">Rental Dates</th>
+                    <th class="px-4 py-3">Buffer End (+3d)</th>
+                    <th class="px-4 py-3">Financials</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-bookings-table-body" class="divide-y divide-stone-100">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 2: ADD WARDROBE ITEM FORM -->
+          <div id="admin-view-new-item" class="hidden">
+            <form onsubmit="App.handleCreateItem(event)" class="space-y-4 max-w-2xl mx-auto text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block font-semibold uppercase tracking-wider text-stone-600 mb-1">Title</label>
+                  <input type="text" id="new-item-title" required placeholder="e.g. Silk Georgette Evening Cape" class="w-full border border-stone-300 rounded-lg p-2.5">
+                </div>
+                <div>
+                  <label class="block font-semibold uppercase tracking-wider text-stone-600 mb-1">Brand / House</label>
+                  <input type="text" id="new-item-brand" required placeholder="e.g. Valentino" class="w-full border border-stone-300 rounded-lg p-2.5">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block font-semibold uppercase tracking-wider text-stone-600 mb-1">Category</label>
+                  <select id="new-item-category" class="w-full border border-stone-300 rounded-lg p-2.5 bg-white">
+                    <option value="Dresses">Dresses</option>
+                    <option value="Outerwear">Outerwear</option>
+                    <option value="Ethnic/Occasion">Ethnic/Occasion</option>
+                    <option value="Accessories">Accessories</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold uppercase tracking-wider text-stone-600 mb-1">Size</label>
+                  <select id="new-item-size" class="w-full border border-stone-300 rounded-lg p-2.5 bg-white">
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="Free Size">Free Size</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-4">
+                <div>
+                  <label class="block font-semibold uppercase tracking-wider text-stone-600 mb-1">4-Day Price ($)</label>
+                  <input type="number" id="new-item-price4d" min="1" step="0.5" required placeholder="120" class="w-full border border-stone-300 rounded-lg p-2.5">
+                </div>
+                <div>
+                  <label class="block font-semibold uppercase tracking-wider text-stone-600 mb-1">8-Day Price ($)</label>
+                  <input type="number" id="new-item-price8d" min="1" step="0.5" required placeholder="190" class="w-full border border-stone-300 rounded-lg p-2.5">
+                </div>
+                <div>
+                  <label class="block font-semibold uppercase tracking-wider text-stone-600 mb-1">Deposit ($)</label>
+                  <input type="number" id="new-item-deposit" min="0" step="1" required placeholder="150" class="w-full border border-stone-300 rounded-lg p-2.5">
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-semibold uppercase tracking-wider text-stone-600 mb-1">Image URL (Unsplash or CDN)</label>
+                <input type="url" id="new-item-image" required placeholder="https://images.unsplash.com/photo-..." class="w-full border border-stone-300 rounded-lg p-2.5">
+              </div>
+
+              <div class="pt-2 flex items-center justify-end gap-3">
+                <button type="button" onclick="App.setAdminTab('bookings')" class="px-4 py-2 border border-stone-300 rounded-lg text-stone-600 hover:bg-stone-50">Cancel</button>
+                <button type="submit" class="px-6 py-2.5 bg-stone-900 text-white rounded-lg font-semibold hover:bg-stone-800 transition">Save to Wardrobe</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- TAB 3: INVENTORY CATALOG STATUS -->
+          <div id="admin-view-inventory" class="hidden space-y-3">
+            <div id="admin-inventory-list" class="divide-y divide-stone-200 border border-stone-200 rounded-xl overflow-hidden max-h-[50vh] overflow-y-auto">
+              <!-- Injected via JavaScript -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: AUTHENTICATION (SIGN IN / SIGN UP) -->
+  <!-- ========================================== -->
+  <div id="auth-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-stone-900/70 backdrop-blur-sm transition-opacity">
+    <div class="min-h-full flex items-center justify-center p-4">
+      <div class="relative bg-white rounded-2xl max-w-md w-full shadow-2xl border border-stone-200 overflow-hidden text-stone-900">
+        
+        <div class="px-6 pt-6 pb-4 text-center">
+          <span class="font-serif text-xl font-bold tracking-[0.2em] uppercase text-stone-900">
+            ATELIER VESTIAIRE
+          </span>
+          <p class="text-xs text-stone-500 mt-1">Access your wardrobe, bookings & curated fits</p>
+        </div>
+
+        <!-- Auth Tabs -->
+        <div class="flex border-b border-stone-200 text-xs font-semibold tracking-wider uppercase text-stone-500">
+          <button id="auth-tab-login" onclick="App.setAuthTab('login')" class="flex-1 py-3 border-b-2 border-stone-900 text-stone-900">
+            Sign In
+          </button>
+          <button id="auth-tab-signup" onclick="App.setAuthTab('signup')" class="flex-1 py-3 border-b-2 border-transparent hover:text-stone-900">
+            Create Account
+          </button>
+        </div>
+
+        <!-- Form Body -->
+        <div class="p-6">
+          <form id="auth-form" onsubmit="App.handleAuthSubmit(event)" class="space-y-4 text-xs">
+            
+            <div id="auth-fullname-field" class="hidden">
+              <label class="block font-semibold uppercase tracking-wider text-stone-600 mb-1">Full Name</label>
+              <input type="text" id="auth-fullname" placeholder="Lady Genevieve" class="w-full border border-stone-300 rounded-lg p-2.5">
+            </div>
+
+            <div>
+              <label class="block font-semibold uppercase tracking-wider text-stone-600 mb-1">Email Address</label>
+              <input type="email" id="auth-email" required placeholder="user@luxury.com" class="w-full border border-stone-300 rounded-lg p-2.5">
+            </div>
+
+            <div>
+              <label class="block font-semibold uppercase tracking-wider text-stone-600 mb-1">Password</label>
+              <input type="password" id="auth-password" required minlength="6" placeholder="••••••••" class="w-full border border-stone-300 rounded-lg p-2.5">
+            </div>
+
+            <button type="submit" id="auth-submit-btn" class="w-full py-2.5 bg-stone-950 text-white rounded-lg font-semibold tracking-wider uppercase hover:bg-stone-800 transition">
+              Sign In
+            </button>
+          </form>
+
+          <!-- Quick Demo Logins -->
+          <div class="mt-6 pt-6 border-t border-stone-200 text-center">
+            <p class="text-[11px] text-stone-400 uppercase tracking-wider font-semibold mb-3">Quick One-Click Demo Access</p>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="App.loginAsMock('renter')" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 rounded-lg text-xs font-medium text-stone-700 transition">
+                Demo Renter
+              </button>
+              <button onclick="App.loginAsMock('admin')" class="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-xs font-semibold text-amber-900 transition">
+                Demo Admin
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-6 py-3 bg-stone-50 border-t border-stone-100 text-center">
+          <button onclick="App.closeAuthModal()" class="text-xs text-stone-500 hover:text-stone-800">
+            Close Window
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: SQL SCHEMA & SUPABASE SETUP GUIDE   -->
+  <!-- ========================================== -->
+  <div id="sql-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-stone-900/80 backdrop-blur-sm transition-opacity">
+    <div class="min-h-full flex items-center justify-center p-4 sm:p-6">
+      <div class="relative bg-white rounded-2xl max-w-3xl w-full shadow-2xl border border-stone-200 overflow-hidden text-stone-900">
+        
+        <div class="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-900 text-white">
+          <div class="flex items-center gap-2">
+            <i data-lucide="database" class="w-5 h-5 text-amber-400"></i>
+            <h3 class="font-serif text-lg font-bold tracking-wide">Supabase Database Schema & Setup Guide</h3>
+          </div>
+          <button onclick="App.closeSqlModal()" class="text-stone-400 hover:text-white p-1 rounded-full transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-4 text-xs text-stone-700">
+          <p class="leading-relaxed">
+            Run the following SQL script directly in your <strong>Supabase SQL Editor</strong>. It creates the <code>profiles</code>, <code>wardrobe_items</code>, and <code>rentals</code> tables along with production Row-Level-Security (RLS) policies and automatic profile creation triggers:
+          </p>
+
+          <div class="relative">
+            <pre class="bg-stone-900 text-stone-100 p-4 rounded-xl font-mono text-[11px] overflow-x-auto max-h-72 custom-scrollbar select-all" id="sql-code-block">
+-- 1. Create Profiles Table (extends Supabase auth.users)
+create table if not exists public.profiles (
+  id uuid references auth.users on delete cascade primary key,
+  full_name text,
+  phone text,
+  address text,
+  is_admin boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 2. Create Wardrobe Items Table
+create table if not exists public.wardrobe_items (
+  id uuid default gen_random_uuid() primary key,
+  title text not null,
+  brand text not null,
+  size text not null,
+  category text not null,
+  rental_price_4d numeric not null check (rental_price_4d >= 0),
+  rental_price_8d numeric not null check (rental_price_8d >= 0),
+  deposit_amount numeric not null check (deposit_amount >= 0),
+  image_url text not null,
+  is_active boolean default true,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 3. Create Rentals Table
+create table if not exists public.rentals (
+  id uuid default gen_random_uuid() primary key,
+  item_id uuid references public.wardrobe_items on delete cascade not null,
+  renter_id uuid references auth.users on delete set null not null,
+  start_date date not null,
+  end_date date not null,
+  buffer_end_date date not null,
+  total_amount numeric not null check (total_amount >= 0),
+  deposit_amount numeric not null check (deposit_amount >= 0),
+  status text not null default 'confirmed' check (status in ('pending', 'confirmed', 'dispatched', 'returned', 'completed', 'cancelled')),
+  deposit_status text not null default 'held' check (deposit_status in ('held', 'refunded', 'forfeited')),
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 4. Enable Row Level Security (RLS)
+alter table public.profiles enable row level security;
+alter table public.wardrobe_items enable row level security;
+alter table public.rentals enable row level security;
+
+-- 5. RLS Policies
+-- Profiles
+create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
+create policy "Admins can view all profiles" on public.profiles for select using (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
+create policy "Users can insert own profile" on public.profiles for insert with check (auth.uid() = id);
+
+-- Wardrobe Items
+create policy "Public can view active items" on public.wardrobe_items for select using (
+  is_active = true or exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+create policy "Admins can manage wardrobe items" on public.wardrobe_items for all using (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+
+-- Rentals
+create policy "Renters can view own rentals" on public.rentals for select using (
+  auth.uid() = renter_id or exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+create policy "Renters can create rentals" on public.rentals for insert with check (auth.uid() = renter_id);
+create policy "Admins can update rentals" on public.rentals for update using (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+
+-- 6. Trigger to automatically generate a profile on Supabase auth user signup
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, full_name, phone, address, is_admin)
+  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', 'Fashion Enthusiast'), '', '', false);
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create or replace trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+            </pre>
+            <button onclick="App.copySql()" class="absolute top-3 right-3 bg-stone-800 hover:bg-stone-700 text-stone-200 px-3 py-1.5 rounded text-[11px] font-medium border border-stone-600 transition flex items-center gap-1.5">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span id="copy-sql-btn-text">Copy SQL</span>
+            </button>
+          </div>
+
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-900">
+            <h4 class="font-bold text-xs flex items-center gap-1.5 mb-1">
+              <i data-lucide="info" class="w-4 h-4 text-amber-600"></i> How to connect index.html
+            </h4>
+            <p class="text-[11px] leading-relaxed">
+              Open <code>index.html</code> in any editor and replace the two constants near the top of the <code>&lt;script&gt;</code> tag with your project credentials:
+              <br><code>const SUPABASE_URL = "https://your-project.supabase.co";</code>
+              <br><code>const SUPABASE_ANON_KEY = "eyJhbGciOi...";</code>
+            </p>
+          </div>
+        </div>
+
+        <div class="px-6 py-3 bg-stone-50 border-t border-stone-100 flex justify-end">
+          <button onclick="App.closeSqlModal()" class="px-5 py-2 text-xs uppercase tracking-wider font-semibold text-stone-700 hover:text-stone-900 transition">
+            Close
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TOAST NOTIFICATION CONTAINER               -->
+  <!-- ========================================== -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT APPLICATION CORE                -->
+  <!-- ========================================== -->
+  <script>
+    /**
+     * =========================================================================
+     * SUPABASE DATABASE SCHEMA & ROW LEVEL SECURITY (RLS) SETUP
+     * =========================================================================
+     * Copy and paste the following SQL script directly into the Supabase SQL Editor:
+     *
+     * -- 1. Profiles Table (extends Supabase auth.users)
+     * create table if not exists public.profiles (
+     *   id uuid references auth.users on delete cascade primary key,
+     *   full_name text,
+     *   phone text,
+     *   address text,
+     *   is_admin boolean default false,
+     *   created_at timestamp with time zone default timezone('utc'::text, now()) not null
+     * );
+     *
+     * -- 2. Wardrobe Items Table
+     * create table if not exists public.wardrobe_items (
+     *   id uuid default gen_random_uuid() primary key,
+     *   title text not null,
+     *   brand text not null,
+     *   size text not null,
+     *   category text not null,
+     *   rental_price_4d numeric not null check (rental_price_4d >= 0),
+     *   rental_price_8d numeric not null check (rental_price_8d >= 0),
+     *   deposit_amount numeric not null check (deposit_amount >= 0),
+     *   image_url text not null,
+     *   is_active boolean default true,
+     *   created_at timestamp with time zone default timezone('utc'::text, now()) not null
+     * );
+     *
+     * -- 3. Rentals Table
+     * create table if not exists public.rentals (
+     *   id uuid default gen_random_uuid() primary key,
+     *   item_id uuid references public.wardrobe_items on delete cascade not null,
+     *   renter_id uuid references auth.users on delete set null not null,
+     *   start_date date not null,
+     *   end_date date not null,
+     *   buffer_end_date date not null,
+     *   total_amount numeric not null check (total_amount >= 0),
+     *   deposit_amount numeric not null check (deposit_amount >= 0),
+     *   status text not null default 'confirmed' check (status in ('pending', 'confirmed', 'dispatched', 'returned', 'completed', 'cancelled')),
+     *   deposit_status text not null default 'held' check (deposit_status in ('held', 'refunded', 'forfeited')),
+     *   created_at timestamp with time zone default timezone('utc'::text, now()) not null
+     * );
+     *
+     * -- 4. Enable Row Level Security (RLS)
+     * alter table public.profiles enable row level security;
+     * alter table public.wardrobe_items enable row level security;
+     * alter table public.rentals enable row level security;
+     *
+     * -- 5. RLS Policies
+     * -- Profiles:
+     * create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
+     * create policy "Admins can view all profiles" on public.profiles for select using (
+     *   exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+     * );
+     * create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
+     * create policy "Users can insert own profile" on public.profiles for insert with check (auth.uid() = id);
+     *
+     * -- Wardrobe Items:
+     * create policy "Public can view active items" on public.wardrobe_items for select using (
+     *   is_active = true or exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+     * );
+     * create policy "Admins can manage wardrobe items" on public.wardrobe_items for all using (
+     *   exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+     * );
+     *
+     * -- Rentals:
+     * create policy "Renters can view own rentals" on public.rentals for select using (
+     *   auth.uid() = renter_id or exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+     * );
+     * create policy "Renters can create rentals" on public.rentals for insert with check (auth.uid() = renter_id);
+     * create policy "Admins can update rentals" on public.rentals for update using (
+     *   exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+     * );
+     *
+     * -- 6. Auto-Profile Generation Trigger on Auth Signup
+     * create or replace function public.handle_new_user()
+     * returns trigger as $$
+     * begin
+     *   insert into public.profiles (id, full_name, phone, address, is_admin)
+     *   values (new.id, coalesce(new.raw_user_meta_data->>'full_name', 'Fashion Enthusiast'), '', '', false);
+     *   return new;
+     * end;
+     * $$ language plpgsql security definer;
+     *
+     * create or replace trigger on_auth_user_created
+     *   after insert on auth.users
+     *   for each row execute procedure public.handle_new_user();
+     * =========================================================================
+     */
+
+    /**
+     * =========================================================================
+     * SUPABASE CONFIGURATION & INITIALIZATION
+     * Replace these with your actual Supabase Project URL and Anon Public Key.
+     * =========================================================================
+     */
+    const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+
+    // Detect if valid production Supabase keys are provided
+    const isSupabaseConfigured = 
+      SUPABASE_URL !== "YOUR_SUPABASE_PROJECT_URL" && 
+      SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY" && 
+      SUPABASE_URL.startsWith("https://");
+
+    // Initialize Supabase Client if configured
+    let supabaseClient = null;
+    if (isSupabaseConfigured && window.supabase) {
+      try {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("⚡ Supabase Client initialized successfully.");
+      } catch (e) {
+        console.warn("Could not initialize Supabase client:", e);
+      }
+    }
+
+    /**
+     * =========================================================================
+     * CURATED LUXURY SEED DATA (Used in Demo Mode & Initial DB Seeding)
+     * High-resolution, authentic designer editorial imagery.
+     * =========================================================================
+     */
+    const INITIAL_WARDROBE = [
+      {
+        id: "item-1",
+        title: "Cassia Tiered Floral Silk Gown",
+        brand: "Zimmermann",
+        category: "Dresses",
+        size: "S",
+        rental_price_4d: 145,
+        rental_price_8d: 230,
+        deposit_amount: 150,
+        image_url: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      },
+      {
+        id: "item-2",
+        title: "Bouclé Tweed Double-Breasted Jacket",
+        brand: "Chanel Archive",
+        category: "Outerwear",
+        size: "M",
+        rental_price_4d: 195,
+        rental_price_8d: 310,
+        deposit_amount: 250,
+        image_url: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      },
+      {
+        id: "item-3",
+        title: "Royal Zardozi Embroidered Silk Lehenga",
+        brand: "Sabyasachi",
+        category: "Ethnic/Occasion",
+        size: "M",
+        rental_price_4d: 280,
+        rental_price_8d: 450,
+        deposit_amount: 300,
+        image_url: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      },
+      {
+        id: "item-4",
+        title: "Le Smoking Tailored Tuxedo Blazer",
+        brand: "Saint Laurent",
+        category: "Outerwear",
+        size: "XS",
+        rental_price_4d: 160,
+        rental_price_8d: 260,
+        deposit_amount: 200,
+        image_url: "https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      },
+      {
+        id: "item-5",
+        title: "La Robe Saudade Draped Asymmetric Dress",
+        brand: "Jacquemus",
+        category: "Dresses",
+        size: "XS",
+        rental_price_4d: 110,
+        rental_price_8d: 175,
+        deposit_amount: 120,
+        image_url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      },
+      {
+        id: "item-6",
+        title: "Mirror Work Organza Cocktail Saree",
+        brand: "Manish Malhotra",
+        category: "Ethnic/Occasion",
+        size: "Free Size",
+        rental_price_4d: 240,
+        rental_price_8d: 390,
+        deposit_amount: 250,
+        image_url: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      },
+      {
+        id: "item-7",
+        title: "The Pouch Intrecciato Leather Clutch",
+        brand: "Bottega Veneta",
+        category: "Accessories",
+        size: "Free Size",
+        rental_price_4d: 95,
+        rental_price_8d: 150,
+        deposit_amount: 150,
+        image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      },
+      {
+        id: "item-8",
+        title: "Madame 101801 Cashmere Double-Coat",
+        brand: "Max Mara",
+        category: "Outerwear",
+        size: "L",
+        rental_price_4d: 220,
+        rental_price_8d: 350,
+        deposit_amount: 300,
+        image_url: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      },
+      {
+        id: "item-9",
+        title: "Rhea Off-The-Shoulder Knit Midi Dress",
+        brand: "Cult Gaia",
+        category: "Dresses",
+        size: "L",
+        rental_price_4d: 85,
+        rental_price_8d: 135,
+        deposit_amount: 100,
+        image_url: "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      },
+      {
+        id: "item-10",
+        title: "Saddle Bag in Oblique Jacquard",
+        brand: "Dior",
+        category: "Accessories",
+        size: "Free Size",
+        rental_price_4d: 130,
+        rental_price_8d: 210,
+        deposit_amount: 200,
+        image_url: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      },
+      {
+        id: "item-11",
+        title: "Kourtney High-Slit Linen Midi Dress",
+        brand: "Reformation",
+        category: "Dresses",
+        size: "S",
+        rental_price_4d: 70,
+        rental_price_8d: 110,
+        deposit_amount: 80,
+        image_url: "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      },
+      {
+        id: "item-12",
+        title: "Hand-Painted Pichwai Silk Kurta Set",
+        brand: "Anita Dongre",
+        category: "Ethnic/Occasion",
+        size: "XL",
+        rental_price_4d: 175,
+        rental_price_8d: 280,
+        deposit_amount: 180,
+        image_url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=900&q=80",
+        is_active: true
+      }
+    ];
+
+    /**
+     * =========================================================================
+     * APPLICATION STORE & LOGIC
+     * =========================================================================
+     */
+    const App = {
+      // State
+      items: [],
+      rentals: [],
+      currentUser: null,
+      isAdmin: false,
+      
+      // Filters
+      activeCategory: 'All',
+      activeSize: 'All',
+      searchQuery: '',
+      sortOrder: 'featured',
+
+      // Booking State
+      selectedItem: null,
+      bookingDuration: 4, // 4 or 8 days
+      bookingStartDate: null,
+      bookingEndDate: null,
+      bookingBufferEndDate: null,
+      isBookingCollision: false,
+
+      // Initialize
+      async init() {
+        console.log("✨ Initializing Atelier Vestiaire...");
+        
+        // Load items & rentals from localStorage or defaults
+        this.loadLocalData();
+
+        // Check authentication state
+        await this.checkAuth();
+
+        // Update UI banner based on Supabase presence
+        this.updateConfigBanner();
+
+        // Fetch live data if Supabase is connected
+        if (supabaseClient) {
+          await this.syncWithSupabase();
+        }
+
+        // Render Catalog & Update UI
+        this.renderCatalog();
+        this.updateUserNav();
+        this.updateRentalCountBadge();
+
+        // Re-initialize Lucide icons
+        if (window.lucide) {
+          lucide.createIcons();
+        }
+      },
+
+      loadLocalData() {
+        // Items
+        const savedItems = localStorage.getItem('atelier_items');
+        if (savedItems) {
+          try {
+            this.items = JSON.parse(savedItems);
+          } catch (e) {
+            this.items = INITIAL_WARDROBE;
+          }
+        } else {
+          this.items = INITIAL_WARDROBE;
+          localStorage.setItem('atelier_items', JSON.stringify(this.items));
+        }
+
+        // Rentals
+        const savedRentals = localStorage.getItem('atelier_rentals');
+        if (savedRentals) {
+          try {
+            this.rentals = JSON.parse(savedRentals);
+          } catch (e) {
+            this.rentals = [];
+          }
+        } else {
+          // Provide an initial sample confirmed rental so collision detection can be tested immediately!
+          const sampleItem = this.items[0];
+          const today = new Date();
+          const start = new Date(today);
+          start.setDate(today.getDate() + 2); // 2 days from now
+          const end = new Date(start);
+          end.setDate(start.getDate() + 3); // 4 days rental
+          const buffer = new Date(end);
+          buffer.setDate(end.getDate() + 3); // +3 days buffer
+
+          this.rentals = [
+            {
+              id: "rent-sample-1",
+              item_id: sampleItem.id,
+              renter_id: "demo-user-1",
+              renter_name: "Eleanor Vance",
+              start_date: start.toISOString().split('T')[0],
+              end_date: end.toISOString().split('T')[0],
+              buffer_end_date: buffer.toISOString().split('T')[0],
+              total_amount: sampleItem.rental_price_4d + sampleItem.deposit_amount,
+              deposit_amount: sampleItem.deposit_amount,
+              status: "confirmed",
+              deposit_status: "held",
+              created_at: new Date().toISOString()
+            }
+          ];
+          localStorage.setItem('atelier_rentals', JSON.stringify(this.rentals));
+        }
+      },
+
+      async checkAuth() {
+        if (supabaseClient) {
+          try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session?.user) {
+              this.currentUser = {
+                id: session.user.id,
+                email: session.user.email,
+                full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+              };
+              // Check admin in profiles table
+              const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('is_admin, full_name')
+                .eq('id', session.user.id)
+                .single();
+              
+              if (profile) {
+                this.isAdmin = !!profile.is_admin;
+                if (profile.full_name) this.currentUser.full_name = profile.full_name;
+              }
+              return;
+            }
+          } catch (err) {
+            console.warn("Supabase auth check error:", err);
+          }
+        }
+
+        // Local storage demo auth fallback
+        const mockAuth = localStorage.getItem('atelier_mock_user');
+        if (mockAuth) {
+          try {
+            const parsed = JSON.parse(mockAuth);
+            this.currentUser = parsed;
+            this.isAdmin = !!parsed.is_admin;
+          } catch (e) {
+            this.currentUser = null;
+            this.isAdmin = false;
+          }
+        }
+      },
+
+      async syncWithSupabase() {
+        try {
+          // Fetch Items
+          const { data: dbItems, error: itemsErr } = await supabaseClient
+            .from('wardrobe_items')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (!itemsErr && dbItems && dbItems.length > 0) {
+            this.items = dbItems;
+          }
+
+          // Fetch Rentals
+          const { data: dbRentals, error: rentalsErr } = await supabaseClient
+            .from('rentals')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (!rentalsErr && dbRentals) {
+            this.rentals = dbRentals;
+          }
+          console.log("✅ Synced with Supabase tables.");
+        } catch (e) {
+          console.warn("Sync with Supabase failed, falling back to local state:", e);
+        }
+      },
+
+      updateConfigBanner() {
+        const modePill = document.getElementById('status-mode-pill');
+        const bannerText = document.getElementById('config-banner-text');
+        
+        if (isSupabaseConfigured) {
+          modePill.textContent = "Supabase Connected";
+          modePill.className = "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+          bannerText.textContent = `Connected to live Supabase project: ${SUPABASE_URL.replace('https://', '').split('.')[0]}`;
+        } else {
+          modePill.textContent = "Demo Mode";
+          modePill.className = "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30";
+          bannerText.textContent = "Running with interactive local luxury store. Replace SUPABASE_URL & ANON_KEY in code to connect live cloud backend.";
+        }
+
+        const adminNavBtn = document.getElementById('admin-nav-btn');
+        if (this.isAdmin) {
+          adminNavBtn.classList.remove('hidden');
+        } else {
+          adminNavBtn.classList.add('hidden');
+        }
+      },
+
+      // ========================================
+      // CATALOG RENDERING & FILTERING
+      // ========================================
+      setCategory(cat) {
+        this.activeCategory = cat;
+        // Update pills
+        document.querySelectorAll('.filter-pill').forEach(btn => {
+          if (btn.getAttribute('data-filter') === cat) {
+            btn.classList.add('bg-stone-900', 'text-white', 'border-stone-900');
+            btn.classList.remove('bg-white', 'text-stone-700', 'border-stone-200');
+          } else {
+            btn.classList.remove('bg-stone-900', 'text-white', 'border-stone-900');
+            btn.classList.add('bg-white', 'text-stone-700', 'border-stone-200');
+          }
+        });
+        document.querySelectorAll('.nav-cat-btn').forEach(btn => {
+          if (btn.getAttribute('data-cat') === cat) {
+            btn.classList.add('bg-stone-200/80', 'text-stone-900', 'font-semibold');
+          } else {
+            btn.classList.remove('bg-stone-200/80', 'text-stone-900', 'font-semibold');
+          }
+        });
+        this.renderCatalog();
+      },
+
+      handleSizeFilter(size) {
+        this.activeSize = size;
+        this.renderCatalog();
+      },
+
+      handleSort(sort) {
+        this.sortOrder = sort;
+        this.renderCatalog();
+      },
+
+      handleSearch(query) {
+        this.searchQuery = query.toLowerCase().trim();
+        this.renderCatalog();
+      },
+
+      resetFilters() {
+        this.activeCategory = 'All';
+        this.activeSize = 'All';
+        this.searchQuery = '';
+        this.sortOrder = 'featured';
+        document.getElementById('search-input').value = '';
+        document.getElementById('size-select').value = 'All';
+        document.getElementById('sort-select').value = 'featured';
+        this.setCategory('All');
+      },
+
+      renderCatalog() {
+        const grid = document.getElementById('product-grid');
+        const empty = document.getElementById('empty-state');
+        const countSpan = document.getElementById('count-number');
+        
+        let filtered = this.items.filter(item => {
+          if (!item.is_active && !this.isAdmin) return false;
+          if (this.activeCategory !== 'All' && item.category !== this.activeCategory) return false;
+          if (this.activeSize !== 'All' && item.size !== this.activeSize) return false;
+          if (this.searchQuery) {
+            const matchTitle = item.title.toLowerCase().includes(this.searchQuery);
+            const matchBrand = item.brand.toLowerCase().includes(this.searchQuery);
+            const matchCat = item.category.toLowerCase().includes(this.searchQuery);
+            if (!matchTitle && !matchBrand && !matchCat) return false;
+          }
+          return true;
+        });
+
+        // Sorting
+        if (this.sortOrder === 'price-asc') {
+          filtered.sort((a, b) => a.rental_price_4d - b.rental_price_4d);
+        } else if (this.sortOrder === 'price-desc') {
+          filtered.sort((a, b) => b.rental_price_4d - a.rental_price_4d);
+        }
+
+        countSpan.textContent = filtered.length;
+
+        if (filtered.length === 0) {
+          grid.innerHTML = '';
+          empty.classList.remove('hidden');
+          return;
+        }
+
+        empty.classList.add('hidden');
+
+        // Check if item currently has active rental today
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        grid.innerHTML = filtered.map(item => {
+          const hasActiveRental = this.rentals.some(r => 
+            r.item_id === item.id && 
+            r.status !== 'cancelled' &&
+            todayStr >= r.start_date && 
+            todayStr <= r.buffer_end_date
+          );
+
+          return `
+            <div class="group relative flex flex-col bg-white rounded-2xl border border-stone-200/90 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
+              
+              <!-- Image Container -->
+              <div class="relative aspect-[3/4] w-full overflow-hidden bg-stone-100">
+                <img 
+                  src="${item.image_url}" 
+                  alt="${item.title}" 
+                  loading="lazy" 
+                  class="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                >
+                <div class="absolute inset-0 bg-gradient-to-t from-stone-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                <!-- Floating Badges -->
+                <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+                  <span class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-white/95 text-stone-900 rounded-full shadow-sm backdrop-blur-sm border border-stone-100">
+                    Size: ${item.size}
+                  </span>
+                  ${item.category ? `
+                    <span class="px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider bg-stone-900/80 text-stone-100 rounded-md backdrop-blur-sm">
+                      ${item.category}
+                    </span>
+                  ` : ''}
+                </div>
+
+                <div class="absolute top-3 right-3">
+                  ${hasActiveRental ? `
+                    <span class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-amber-500/90 text-white rounded-full shadow-sm backdrop-blur-sm flex items-center gap-1">
+                      <i data-lucide="clock" class="w-3 h-3"></i> Reserved
+                    </span>
+                  ` : `
+                    <span class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-600/90 text-white rounded-full shadow-sm backdrop-blur-sm flex items-center gap-1">
+                      <i data-lucide="sparkle" class="w-3 h-3"></i> Available
+                    </span>
+                  `}
+                </div>
+
+                <!-- Quick Action on Hover -->
+                <div class="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button 
+                    onclick="App.openBookingModal('${item.id}')" 
+                    class="w-full py-2.5 px-4 bg-white/95 hover:bg-white text-stone-950 font-semibold text-xs uppercase tracking-wider rounded-xl shadow-lg transition flex items-center justify-center gap-1.5"
+                  >
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-brand-700"></i> Reserve Piece
+                  </button>
+                </div>
+              </div>
+
+              <!-- Product Details -->
+              <div class="p-4 flex flex-col flex-1 justify-between">
+                <div>
+                  <span class="text-[11px] uppercase tracking-[0.2em] font-semibold text-stone-500">
+                    ${item.brand}
+                  </span>
+                  <h3 class="font-serif text-lg font-bold text-stone-900 line-clamp-2 mt-0.5 group-hover:text-brand-800 transition-colors">
+                    ${item.title}
+                  </h3>
+                </div>
+
+                <!-- Pricing & Deposit Details -->
+                <div class="mt-4 pt-3 border-t border-stone-100">
+                  <div class="flex items-baseline justify-between">
+                    <div>
+                      <span class="text-xs text-stone-500">4-Day:</span>
+                      <span class="font-bold text-stone-950 text-sm ml-1">$${item.rental_price_4d}</span>
+                    </div>
+                    <div>
+                      <span class="text-xs text-stone-500">8-Day:</span>
+                      <span class="font-bold text-stone-950 text-sm ml-1">$${item.rental_price_8d}</span>
+                    </div>
+                  </div>
+
+                  <div class="mt-2 flex items-center justify-between text-[11px] text-stone-500">
+                    <span class="inline-flex items-center gap-1 text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
+                      <i data-lucide="shield" class="w-3 h-3 text-stone-400"></i> Deposit: $${item.deposit_amount}
+                    </span>
+                    <button onclick="App.openBookingModal('${item.id}')" class="text-xs font-semibold text-brand-800 hover:text-stone-900 underline underline-offset-2">
+                      Rent Now →
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          `;
+        }).join('');
+
+        if (window.lucide) {
+          lucide.createIcons();
+        }
+      },
+
+      // ========================================
+      // BOOKING MODAL & COLLISION DETECTION
+      // ========================================
+      openBookingModal(itemId) {
+        const item = this.items.find(i => i.id === itemId);
+        if (!item) return;
+
+        this.selectedItem = item;
+        this.bookingDuration = 4;
+        
+        // Default start date = tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const yyyy = tomorrow.getFullYear();
+        const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const dd = String(tomorrow.getDate()).padStart(2, '0');
+        const tomorrowStr = `${yyyy}-${mm}-${dd}`;
+
+        // Populate Preview Header
+        const preview = document.getElementById('booking-item-preview');
+        preview.innerHTML = `
+          <img src="${item.image_url}" alt="${item.title}" class="w-16 h-20 object-cover rounded-lg border border-stone-200">
+          <div class="flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] uppercase tracking-widest font-semibold text-stone-500">${item.brand}</span>
+              <h4 class="font-serif font-bold text-base text-stone-900 leading-snug">${item.title}</h4>
+              <span class="text-xs text-stone-600 font-medium">Size: ${item.size} • Category: ${item.category}</span>
+            </div>
+            <div class="text-[11px] text-stone-500">
+              Refundable Deposit: <span class="font-semibold text-stone-900">$${item.deposit_amount}</span>
+            </div>
+          </div>
+        `;
+
+        // Update pricing tags in duration toggles
+        document.getElementById('price-4d-tag').textContent = `$${item.rental_price_4d}`;
+        document.getElementById('price-8d-tag').textContent = `$${item.rental_price_8d}`;
+
+        // Set duration radio
+        document.querySelector('input[name="rental-duration"][value="4"]').checked = true;
+        this.styleDurationCards(4);
+
+        // Date input min
+        const dateInput = document.getElementById('booking-start-date');
+        dateInput.min = tomorrowStr;
+        dateInput.value = tomorrowStr;
+
+        // Compute schedule
+        this.handleDateSelection(tomorrowStr);
+
+        // Open modal
+        document.getElementById('booking-modal').classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      },
+
+      closeBookingModal() {
+        document.getElementById('booking-modal').classList.add('hidden');
+        this.selectedItem = null;
+      },
+
+      handleDurationChange(days) {
+        this.bookingDuration = parseInt(days, 10);
+        this.styleDurationCards(this.bookingDuration);
+        const dateInput = document.getElementById('booking-start-date');
+        if (dateInput.value) {
+          this.handleDateSelection(dateInput.value);
+        }
+      },
+
+      styleDurationCards(activeDuration) {
+        const card4 = document.getElementById('duration-4d-card');
+        const card8 = document.getElementById('duration-8d-card');
+        if (activeDuration === 4) {
+          card4.classList.add('border-stone-900', 'bg-stone-50');
+          card4.classList.remove('border-stone-200');
+          card8.classList.remove('border-stone-900', 'bg-stone-50');
+          card8.classList.add('border-stone-200');
+        } else {
+          card8.classList.add('border-stone-900', 'bg-stone-50');
+          card8.classList.remove('border-stone-200');
+          card4.classList.remove('border-stone-900', 'bg-stone-50');
+          card4.classList.add('border-stone-200');
+        }
+      },
+
+      /**
+       * Core Rental Date & Collision Logic:
+       * Requested Window: [Start Date, End Date]
+       * Required Transit & Dry Cleaning Buffer Window: [End Date + 1 Day, End Date + 3 Days]
+       * Overlap condition with any existing reservation:
+       * (requested_start <= existing.buffer_end_date AND requested_end >= existing.start_date)
+       */
+      handleDateSelection(startDateStr) {
+        if (!startDateStr || !this.selectedItem) return;
+
+        this.bookingStartDate = startDateStr;
+
+        // Parse date using string parts to avoid timezone shifting
+        const [year, month, day] = startDateStr.split('-').map(Number);
+        const start = new Date(year, month - 1, day);
+
+        // End Date
+        // 4-Day rental: Day 1, Day 2, Day 3, Day 4 -> start + 3 days
+        // 8-Day rental: start + 7 days
+        const daysToAdd = this.bookingDuration === 4 ? 3 : 7;
+        const end = new Date(start);
+        end.setDate(start.getDate() + daysToAdd);
+
+        // Buffer End Date: End date + 3 days (cleaning & return shipping)
+        const bufferEnd = new Date(end);
+        bufferEnd.setDate(end.getDate() + 3);
+
+        const formatDate = (d) => {
+          return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        };
+        const formatYMD = (d) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${dd}`;
+        };
+
+        this.bookingEndDate = formatYMD(end);
+        this.bookingBufferEndDate = formatYMD(bufferEnd);
+
+        // Display Schedule
+        document.getElementById('computed-rental-range').textContent = `${formatDate(start)} → ${formatDate(end)}`;
+        document.getElementById('computed-return-date').textContent = formatDate(end);
+        document.getElementById('computed-buffer-range').textContent = `Cleaned by ${formatDate(bufferEnd)}`;
+
+        // Check Collisions
+        this.checkCollision(this.selectedItem.id, this.bookingStartDate, this.bookingEndDate);
+
+        // Update Pricing Breakdown
+        const rentalFee = this.bookingDuration === 4 ? this.selectedItem.rental_price_4d : this.selectedItem.rental_price_8d;
+        const deposit = this.selectedItem.deposit_amount;
+        const total = Number(rentalFee) + Number(deposit);
+
+        document.getElementById('summary-duration-label').textContent = `${this.bookingDuration} Days`;
+        document.getElementById('summary-rental-fee').textContent = `$${Number(rentalFee).toFixed(2)}`;
+        document.getElementById('summary-deposit-fee').textContent = `$${Number(deposit).toFixed(2)}`;
+        document.getElementById('summary-total-fee').textContent = `$${Number(total).toFixed(2)}`;
+      },
+
+      checkCollision(itemId, requestedStart, requestedEnd) {
+        const alertBox = document.getElementById('collision-alert');
+        const confirmBtn = document.getElementById('confirm-booking-btn');
+
+        // Collision rule: (requested_start <= buffer_end_date AND requested_end >= start_date)
+        const conflictingRental = this.rentals.find(r => {
+          if (r.item_id !== itemId) return false;
+          if (r.status === 'cancelled') return false;
+          return (requestedStart <= r.buffer_end_date && requestedEnd >= r.start_date);
+        });
+
+        if (conflictingRental) {
+          this.isBookingCollision = true;
+          alertBox.className = "p-3.5 rounded-xl text-xs flex items-start gap-3 bg-rose-50 border border-rose-200 text-rose-900";
+          alertBox.innerHTML = `
+            <i data-lucide="calendar-x" class="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5"></i>
+            <div>
+              <span class="font-bold block text-sm">Schedule Conflict Detected</span>
+              <p class="mt-0.5 text-rose-700">
+                This item is already reserved from <strong>${conflictingRental.start_date}</strong> to <strong>${conflictingRental.end_date}</strong> 
+                (dry cleaning buffer extends to <strong>${conflictingRental.buffer_end_date}</strong>).
+                Please select a date after ${conflictingRental.buffer_end_date}.
+              </p>
+            </div>
+          `;
+          alertBox.classList.remove('hidden');
+          confirmBtn.disabled = true;
+        } else {
+          this.isBookingCollision = false;
+          alertBox.className = "p-3.5 rounded-xl text-xs flex items-start gap-3 bg-emerald-50 border border-emerald-200 text-emerald-900";
+          alertBox.innerHTML = `
+            <i data-lucide="calendar-check" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+            <div>
+              <span class="font-bold block text-sm">Dates Perfectly Available</span>
+              <p class="mt-0.5 text-emerald-700">
+                This piece is ready in the Atelier vault. We'll hold it exclusively for your selected dates.
+              </p>
+            </div>
+          `;
+          alertBox.classList.remove('hidden');
+          confirmBtn.disabled = false;
+        }
+
+        if (window.lucide) lucide.createIcons();
+      },
+
+      async executeBooking() {
+        if (!this.selectedItem || this.isBookingCollision || !this.bookingStartDate) {
+          this.showToast('Please choose an available date.', 'error');
+          return;
+        }
+
+        // Check if user is logged in
+        if (!this.currentUser) {
+          this.showToast('Please sign in or select Demo Renter to confirm your booking.', 'warning');
+          this.openAuthModal();
+          return;
+        }
+
+        const rentalFee = this.bookingDuration === 4 ? this.selectedItem.rental_price_4d : this.selectedItem.rental_price_8d;
+        const deposit = this.selectedItem.deposit_amount;
+        const total = Number(rentalFee) + Number(deposit);
+
+        const newRental = {
+          id: `rent-${Date.now()}`,
+          item_id: this.selectedItem.id,
+          renter_id: this.currentUser.id,
+          renter_name: this.currentUser.full_name || this.currentUser.email,
+          start_date: this.bookingStartDate,
+          end_date: this.bookingEndDate,
+          buffer_end_date: this.bookingBufferEndDate,
+          total_amount: total,
+          deposit_amount: deposit,
+          status: 'confirmed',
+          deposit_status: 'held',
+          created_at: new Date().toISOString()
+        };
+
+        // If Supabase is connected, insert record
+        if (supabaseClient) {
+          try {
+            const { error } = await supabaseClient
+              .from('rentals')
+              .insert([{
+                item_id: newRental.item_id,
+                renter_id: newRental.renter_id,
+                start_date: newRental.start_date,
+                end_date: newRental.end_date,
+                buffer_end_date: newRental.buffer_end_date,
+                total_amount: newRental.total_amount,
+                deposit_amount: newRental.deposit_amount,
+                status: newRental.status,
+                deposit_status: newRental.deposit_status
+              }]);
+            
+            if (error) {
+              console.warn("Supabase insert warning, persisting locally:", error);
+            }
+          } catch (e) {
+            console.error("Supabase booking call failed:", e);
+          }
+        }
+
+        // Local state persistence
+        this.rentals.unshift(newRental);
+        localStorage.setItem('atelier_rentals', JSON.stringify(this.rentals));
+
+        this.closeBookingModal();
+        this.showToast(`✨ Booking confirmed for ${this.selectedItem.title}!`, 'success');
+        this.updateRentalCountBadge();
+        this.renderCatalog();
+        
+        // Open user rentals to view new reservation
+        setTimeout(() => this.openRentalsModal(), 600);
+      },
+
+      // ========================================
+      // USER RENTALS DASHBOARD MODAL
+      // ========================================
+      openRentalsModal() {
+        const container = document.getElementById('user-rentals-container');
+        
+        // Filter rentals for current user (or show all if demo mode)
+        const userRentals = this.currentUser 
+          ? this.rentals.filter(r => r.renter_id === this.currentUser.id)
+          : this.rentals;
+
+        if (userRentals.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12">
+              <i data-lucide="package-open" class="w-12 h-12 text-stone-300 mx-auto mb-3"></i>
+              <h4 class="font-serif text-lg font-bold text-stone-800">No active wardrobe rentals</h4>
+              <p class="text-xs text-stone-500 mt-1">Explore our runway catalog to reserve your first designer piece.</p>
+              <button onclick="App.closeRentalsModal()" class="mt-4 px-4 py-2 text-xs uppercase tracking-wider font-semibold bg-stone-900 text-white rounded-full">
+                Browse Collection
+              </button>
+            </div>
+          `;
+        } else {
+          container.innerHTML = userRentals.map(rental => {
+            const item = this.items.find(i => i.id === rental.item_id) || {
+              title: "Archive Couture Piece",
+              brand: "Designer Vault",
+              image_url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=400&q=80"
+            };
+
+            // Timeline status indicators
+            const statusMap = {
+              'confirmed': { label: 'Confirmed & Vault Reserved', color: 'bg-stone-900 text-white' },
+              'dispatched': { label: 'Dispatched via Courier', color: 'bg-amber-600 text-white' },
+              'returned': { label: 'Returned to Atelier', color: 'bg-blue-600 text-white' },
+              'completed': { label: 'Completed (Deposit Refunded)', color: 'bg-emerald-700 text-white' },
+              'cancelled': { label: 'Cancelled', color: 'bg-stone-400 text-white' }
+            };
+
+            const depositMap = {
+              'held': { label: 'Deposit Held', badge: 'bg-amber-50 text-amber-800 border-amber-200' },
+              'refunded': { label: 'Deposit Refunded', badge: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+              'forfeited': { label: 'Deposit Forfeited', badge: 'bg-rose-50 text-rose-800 border-rose-200' }
+            };
+
+            const st = statusMap[rental.status] || statusMap['confirmed'];
+            const dep = depositMap[rental.deposit_status] || depositMap['held'];
+
+            return `
+              <div class="p-4 rounded-xl border border-stone-200 bg-white hover:border-stone-300 transition-all flex flex-col sm:flex-row gap-4">
+                <img src="${item.image_url}" alt="${item.title}" class="w-full sm:w-24 h-32 sm:h-auto object-cover rounded-lg border border-stone-100 flex-shrink-0">
+                
+                <div class="flex-1 flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                      <span class="text-[10px] uppercase tracking-widest font-bold text-stone-500">${item.brand}</span>
+                      <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full ${st.color}">
+                        ${st.label}
+                      </span>
+                    </div>
+                    <h4 class="font-serif text-base font-bold text-stone-900 mt-0.5">${item.title}</h4>
+                  </div>
+
+                  <!-- Date schedules -->
+                  <div class="my-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs bg-stone-50 p-2.5 rounded-lg border border-stone-100">
+                    <div>
+                      <span class="text-[10px] text-stone-400 uppercase tracking-wider block">Start Date</span>
+                      <span class="font-semibold text-stone-800">${rental.start_date}</span>
+                    </div>
+                    <div>
+                      <span class="text-[10px] text-stone-400 uppercase tracking-wider block">Return Due</span>
+                      <span class="font-semibold text-stone-800">${rental.end_date}</span>
+                    </div>
+                    <div class="col-span-2 sm:col-span-1">
+                      <span class="text-[10px] text-stone-400 uppercase tracking-wider block">Transit/Clean Buffer</span>
+                      <span class="font-medium text-stone-600">${rental.buffer_end_date}</span>
+                    </div>
+                  </div>
+
+                  <!-- Financials & Security Deposit status -->
+                  <div class="flex items-center justify-between text-xs pt-1 border-t border-stone-100">
+                    <span class="text-stone-500">Total Paid: <strong class="text-stone-900">$${rental.total_amount}</strong></span>
+                    <span class="px-2.5 py-0.5 text-[10px] font-semibold border rounded-full ${dep.badge}">
+                      <i data-lucide="shield" class="w-3 h-3 inline mr-1"></i> ${dep.label} ($${rental.deposit_amount})
+                    </span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        document.getElementById('rentals-modal').classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      },
+
+      closeRentalsModal() {
+        document.getElementById('rentals-modal').classList.add('hidden');
+      },
+
+      updateRentalCountBadge() {
+        const badge = document.getElementById('rental-badge-count');
+        const count = this.currentUser 
+          ? this.rentals.filter(r => r.renter_id === this.currentUser.id && r.status !== 'completed' && r.status !== 'cancelled').length 
+          : this.rentals.length;
+
+        if (count > 0) {
+          badge.textContent = count;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      },
+
+      // ========================================
+      // ADMIN PORTAL & LOGISTICS
+      // ========================================
+      openAdminModal() {
+        if (!this.isAdmin) {
+          this.showToast('Admin authorization required. Toggle demo admin mode to test.', 'warning');
+          return;
+        }
+        this.setAdminTab('bookings');
+        document.getElementById('admin-modal').classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      },
+
+      closeAdminModal() {
+        document.getElementById('admin-modal').classList.add('hidden');
+      },
+
+      setAdminTab(tab) {
+        // Tab buttons
+        ['bookings', 'new-item', 'inventory'].forEach(t => {
+          const btn = document.getElementById(`admin-tab-${t}`);
+          const view = document.getElementById(`admin-view-${t}`);
+          if (t === tab) {
+            btn.className = "py-3 border-b-2 border-stone-900 text-stone-900 font-bold";
+            view.classList.remove('hidden');
+          } else {
+            btn.className = "py-3 border-b-2 border-transparent text-stone-500 hover:text-stone-900";
+            view.classList.add('hidden');
+          }
+        });
+
+        if (tab === 'bookings') this.renderAdminBookings();
+        if (tab === 'inventory') this.renderAdminInventory();
+        if (window.lucide) lucide.createIcons();
+      },
+
+      refreshAdminBookings() {
+        this.renderAdminBookings();
+        this.showToast('Bookings refreshed.', 'info');
+      },
+
+      renderAdminBookings() {
+        const tbody = document.getElementById('admin-bookings-table-body');
+        if (this.rentals.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-stone-400">No bookings recorded yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = this.rentals.map(rental => {
+          const item = this.items.find(i => i.id === rental.item_id) || { title: "Archived Item", brand: "Unknown" };
+          return `
+            <tr class="hover:bg-stone-50 transition">
+              <td class="px-4 py-3">
+                <div class="font-semibold text-stone-900">${item.title}</div>
+                <div class="text-[10px] text-stone-400 font-mono">${rental.renter_name || rental.renter_id}</div>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <span class="font-medium">${rental.start_date}</span> to <span class="font-medium">${rental.end_date}</span>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-amber-800 font-medium">
+                ${rental.buffer_end_date}
+              </td>
+              <td class="px-4 py-3">
+                <div>Total: <strong>$${rental.total_amount}</strong></div>
+                <div class="text-[10px] text-stone-500">Deposit: $${rental.deposit_amount} (${rental.deposit_status})</div>
+              </td>
+              <td class="px-4 py-3">
+                <select 
+                  onchange="App.updateRentalStatus('${rental.id}', this.value)" 
+                  class="bg-white border border-stone-200 rounded px-2 py-1 text-xs font-semibold text-stone-800"
+                >
+                  <option value="confirmed" ${rental.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                  <option value="dispatched" ${rental.status === 'dispatched' ? 'selected' : ''}>Dispatched</option>
+                  <option value="returned" ${rental.status === 'returned' ? 'selected' : ''}>Returned</option>
+                  <option value="completed" ${rental.status === 'completed' ? 'selected' : ''}>Completed</option>
+                  <option value="cancelled" ${rental.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select>
+              </td>
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                ${rental.deposit_status === 'held' ? `
+                  <button 
+                    onclick="App.refundDeposit('${rental.id}')" 
+                    class="px-2.5 py-1 text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded transition"
+                  >
+                    Refund Deposit
+                  </button>
+                ` : `
+                  <span class="text-[11px] text-stone-400 italic">Deposit ${rental.deposit_status}</span>
+                `}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      },
+
+      async updateRentalStatus(rentalId, newStatus) {
+        const rental = this.rentals.find(r => r.id === rentalId);
+        if (!rental) return;
+
+        rental.status = newStatus;
+        if (newStatus === 'completed' && rental.deposit_status === 'held') {
+          rental.deposit_status = 'refunded';
+        }
+
+        // Supabase sync
+        if (supabaseClient) {
+          await supabaseClient
+            .from('rentals')
+            .update({ status: rental.status, deposit_status: rental.deposit_status })
+            .eq('id', rentalId);
+        }
+
+        localStorage.setItem('atelier_rentals', JSON.stringify(this.rentals));
+        this.renderAdminBookings();
+        this.renderCatalog();
+        this.showToast(`Rental status updated to ${newStatus}.`, 'success');
+      },
+
+      async refundDeposit(rentalId) {
+        const rental = this.rentals.find(r => r.id === rentalId);
+        if (!rental) return;
+
+        rental.deposit_status = 'refunded';
+
+        if (supabaseClient) {
+          await supabaseClient
+            .from('rentals')
+            .update({ deposit_status: 'refunded' })
+            .eq('id', rentalId);
+        }
+
+        localStorage.setItem('atelier_rentals', JSON.stringify(this.rentals));
+        this.renderAdminBookings();
+        this.showToast(`Security deposit of $${rental.deposit_amount} refunded successfully.`, 'success');
+      },
+
+      async handleCreateItem(event) {
+        event.preventDefault();
+        const title = document.getElementById('new-item-title').value;
+        const brand = document.getElementById('new-item-brand').value;
+        const category = document.getElementById('new-item-category').value;
+        const size = document.getElementById('new-item-size').value;
+        const price4d = parseFloat(document.getElementById('new-item-price4d').value);
+        const price8d = parseFloat(document.getElementById('new-item-price8d').value);
+        const deposit = parseFloat(document.getElementById('new-item-deposit').value);
+        const image = document.getElementById('new-item-image').value;
+
+        const newItem = {
+          id: `item-${Date.now()}`,
+          title,
+          brand,
+          category,
+          size,
+          rental_price_4d: price4d,
+          rental_price_8d: price8d,
+          deposit_amount: deposit,
+          image_url: image,
+          is_active: true,
+          created_at: new Date().toISOString()
+        };
+
+        if (supabaseClient) {
+          try {
+            const { error } = await supabaseClient
+              .from('wardrobe_items')
+              .insert([{
+                title: newItem.title,
+                brand: newItem.brand,
+                category: newItem.category,
+                size: newItem.size,
+                rental_price_4d: newItem.rental_price_4d,
+                rental_price_8d: newItem.rental_price_8d,
+                deposit_amount: newItem.deposit_amount,
+                image_url: newItem.image_url,
+                is_active: newItem.is_active
+              }]);
+            if (error) console.warn("Supabase insert item warning:", error);
+          } catch (e) {
+            console.error("Supabase item call error:", e);
+          }
+        }
+
+        this.items.unshift(newItem);
+        localStorage.setItem('atelier_items', JSON.stringify(this.items));
+
+        event.target.reset();
+        this.setAdminTab('bookings');
+        this.renderCatalog();
+        this.showToast(`✨ ${newItem.title} added to Wardrobe!`, 'success');
+      },
+
+      renderAdminInventory() {
+        const list = document.getElementById('admin-inventory-list');
+        list.innerHTML = this.items.map(item => `
+          <div class="p-3 bg-white flex items-center justify-between text-xs hover:bg-stone-50">
+            <div class="flex items-center gap-3">
+              <img src="${item.image_url}" class="w-10 h-12 object-cover rounded border border-stone-200">
+              <div>
+                <span class="font-bold text-stone-900">${item.title}</span>
+                <span class="text-stone-500 block">${item.brand} • Size: ${item.size} • $${item.rental_price_4d}/4d</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button 
+                onclick="App.toggleItemActive('${item.id}')" 
+                class="px-2.5 py-1 rounded text-[11px] font-semibold transition ${item.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200 text-stone-600'}"
+              >
+                ${item.is_active ? 'Active' : 'Inactive'}
+              </button>
+            </div>
+          </div>
+        `).join('');
+      },
+
+      async toggleItemActive(itemId) {
+        const item = this.items.find(i => i.id === itemId);
+        if (!item) return;
+        item.is_active = !item.is_active;
+
+        if (supabaseClient) {
+          await supabaseClient
+            .from('wardrobe_items')
+            .update({ is_active: item.is_active })
+            .eq('id', itemId);
+        }
+
+        localStorage.setItem('atelier_items', JSON.stringify(this.items));
+        this.renderAdminInventory();
+        this.renderCatalog();
+        this.showToast(`${item.title} is now ${item.is_active ? 'Active' : 'Hidden'}.`, 'info');
+      },
+
+      toggleDemoAdmin() {
+        this.isAdmin = !this.isAdmin;
+        document.getElementById('admin-toggle-text').textContent = this.isAdmin ? "Exit Admin Mode" : "Toggle Admin View";
+        this.updateConfigBanner();
+        this.renderCatalog();
+        this.showToast(`Admin privileges ${this.isAdmin ? 'granted' : 'revoked'}.`, this.isAdmin ? 'success' : 'info');
+      },
+
+      // ========================================
+      // AUTHENTICATION MODAL & LOGIC
+      // ========================================
+      openAuthModal() {
+        document.getElementById('auth-modal').classList.remove('hidden');
+      },
+
+      closeAuthModal() {
+        document.getElementById('auth-modal').classList.add('hidden');
+      },
+
+      setAuthTab(tab) {
+        const tabLogin = document.getElementById('auth-tab-login');
+        const tabSignup = document.getElementById('auth-tab-signup');
+        const fullnameField = document.getElementById('auth-fullname-field');
+        const submitBtn = document.getElementById('auth-submit-btn');
+
+        if (tab === 'signup') {
+          tabSignup.className = "flex-1 py-3 border-b-2 border-stone-900 text-stone-900 font-bold";
+          tabLogin.className = "flex-1 py-3 border-b-2 border-transparent text-stone-500 hover:text-stone-900";
+          fullnameField.classList.remove('hidden');
+          submitBtn.textContent = "Create Account";
+        } else {
+          tabLogin.className = "flex-1 py-3 border-b-2 border-stone-900 text-stone-900 font-bold";
+          tabSignup.className = "flex-1 py-3 border-b-2 border-transparent text-stone-500 hover:text-stone-900";
+          fullnameField.classList.add('hidden');
+          submitBtn.textContent = "Sign In";
+        }
+      },
+
+      async handleAuthSubmit(e) {
+        e.preventDefault();
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
+        const fullname = document.getElementById('auth-fullname').value;
+        const isSignup = !document.getElementById('auth-fullname-field').classList.contains('hidden');
+
+        if (supabaseClient) {
+          try {
+            if (isSignup) {
+              const { data, error } = await supabaseClient.auth.signUp({
+                email,
+                password,
+                options: { data: { full_name: fullname } }
+              });
+              if (error) throw error;
+              this.showToast('Account registered! Please check email or sign in.', 'success');
+            } else {
+              const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email,
+                password
+              });
+              if (error) throw error;
+              this.currentUser = {
+                id: data.user.id,
+                email: data.user.email,
+                full_name: data.user.user_metadata?.full_name || data.user.email.split('@')[0]
+              };
+              this.showToast(`Welcome back, ${this.currentUser.full_name}!`, 'success');
+            }
+          } catch (err) {
+            this.showToast(err.message, 'error');
+            return;
+          }
+        } else {
+          // Mock login for demo
+          this.currentUser = {
+            id: `user-${Date.now()}`,
+            email: email,
+            full_name: fullname || email.split('@')[0],
+            is_admin: false
+          };
+          localStorage.setItem('atelier_mock_user', JSON.stringify(this.currentUser));
+          this.showToast(`Signed in as ${this.currentUser.full_name}`, 'success');
+        }
+
+        this.closeAuthModal();
+        this.updateUserNav();
+        this.updateRentalCountBadge();
+      },
+
+      loginAsMock(type) {
+        if (type === 'admin') {
+          this.currentUser = {
+            id: "mock-admin-id",
+            email: "director@ateliervestiaire.com",
+            full_name: "Atelier Director",
+            is_admin: true
+          };
+          this.isAdmin = true;
+          this.showToast('Signed in as Atelier Admin.', 'success');
+        } else {
+          this.currentUser = {
+            id: "demo-user-1",
+            email: "client@couture.com",
+            full_name: "Eleanor Vance",
+            is_admin: false
+          };
+          this.isAdmin = false;
+          this.showToast('Signed in as Demo Renter (Eleanor Vance).', 'success');
+        }
+
+        localStorage.setItem('atelier_mock_user', JSON.stringify(this.currentUser));
+        this.closeAuthModal();
+        this.updateUserNav();
+        this.updateConfigBanner();
+        this.updateRentalCountBadge();
+        this.renderCatalog();
+      },
+
+      logout() {
+        if (supabaseClient) {
+          supabaseClient.auth.signOut();
+        }
+        this.currentUser = null;
+        this.isAdmin = false;
+        localStorage.removeItem('atelier_mock_user');
+        this.updateUserNav();
+        this.updateConfigBanner();
+        this.updateRentalCountBadge();
+        this.renderCatalog();
+        this.showToast('Signed out of Atelier.', 'info');
+      },
+
+      updateUserNav() {
+        const container = document.getElementById('auth-actions-container');
+        if (this.currentUser) {
+          container.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-stone-700 hidden sm:inline font-medium">
+                ${this.currentUser.full_name || this.currentUser.email}
+              </span>
+              <button 
+                onclick="App.logout()" 
+                class="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-stone-600 hover:text-stone-900 hover:bg-stone-200/60 rounded-full transition border border-stone-200"
+              >
+                Sign Out
+              </button>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <button 
+              onclick="App.openAuthModal()" 
+              class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold tracking-wider uppercase text-white bg-stone-900 hover:bg-stone-800 rounded-full shadow-sm hover:shadow transition"
+            >
+              <i data-lucide="user" class="w-3.5 h-3.5"></i>
+              <span>Sign In</span>
+            </button>
+          `;
+        }
+        if (window.lucide) lucide.createIcons();
+      },
+
+      // ========================================
+      // SQL SETUP MODAL & CLIPBOARD
+      // ========================================
+      openSqlModal() {
+        document.getElementById('sql-modal').classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      },
+
+      closeSqlModal() {
+        document.getElementById('sql-modal').classList.add('hidden');
+      },
+
+      copySql() {
+        const code = document.getElementById('sql-code-block').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+          const btnText = document.getElementById('copy-sql-btn-text');
+          btnText.textContent = "Copied to Clipboard!";
+          setTimeout(() => {
+            btnText.textContent = "Copy SQL";
+          }, 2500);
+          this.showToast('SQL schema copied to clipboard.', 'success');
+        }).catch(err => {
+          this.showToast('Could not copy SQL automatically.', 'error');
+        });
+      },
+
+      // ========================================
+      // TOAST NOTIFICATION SYSTEM
+      // ========================================
+      showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `pointer-events-auto flex items-center justify-between gap-3 p-3.5 rounded-xl shadow-xl text-xs font-medium text-white transition-all transform translate-y-2 opacity-0 duration-300 ${
+          type === 'success' ? 'bg-stone-900 border border-stone-700' :
+          type === 'error' ? 'bg-rose-900 border border-rose-700' :
+          type === 'warning' ? 'bg-amber-900 border border-amber-700' :
+          'bg-stone-800 border border-stone-600'
+        }`;
+
+        const iconName = 
+          type === 'success' ? 'check-circle' :
+          type === 'error' ? 'alert-triangle' :
+          type === 'warning' ? 'alert-circle' : 'info';
+
+        toast.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="${iconName}" class="w-4 h-4 text-brand-300 flex-shrink-0"></i>
+            <span>${message}</span>
+          </div>
+          <button onclick="this.parentElement.remove()" class="text-stone-400 hover:text-white p-0.5 rounded transition">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        `;
+
+        container.appendChild(toast);
+        if (window.lucide) lucide.createIcons();
+
+        // Animate in
+        requestAnimationFrame(() => {
+          toast.classList.remove('translate-y-2', 'opacity-0');
+        });
+
+        // Auto remove
+        setTimeout(() => {
+          toast.classList.add('opacity-0', 'translate-y-2');
+          setTimeout(() => toast.remove(), 300);
+        }, 4000);
+      }
+    };
+
+    // Initialize application when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      App.init();
+    });
+  </script>
+</body>
+</html>
